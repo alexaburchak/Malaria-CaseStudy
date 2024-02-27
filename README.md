@@ -101,12 +101,19 @@ python ~/malaria/Resources/Programs/datParser.py Ht_blast_results Htartakovskyi.
 
 ## Identify orthologs with proteinortho and BUSCO
 ```sh
+# Before parsing, an error needs to be fixed in the Plasmodium knowlesi genome file:
+cd ~/malaria/Resources/Genomes
+cat Plasmodium_knowlesi.genome | grep -v '^chromosome' > fixed_Pk.genome
+
+cd ../../../tmp/Prediction/
+cp fixed_Pk.gtf ~/malaria/1_Predictions 
+
 # Use gffParse.pl from earlier to print the protein sequences in fasta format for each Plasmodium genome
 cd ~/malaria/Resources/Programs/
 ./gffParse.pl -i ~/malaria/Resources/Genomes/Plasmodium_berghei.genome -g  ~/malaria/1_Predictions/genemark.Pb.gtf -b Pb -c -p
 ./gffParse.pl -i ~/malaria/Resources/Genomes/Plasmodium_cynomolgi.genome -g  ~/malaria/1_Predictions/genemark.Pc.gtf -b Pc -c -p
 ./gffParse.pl -i ~/malaria/Resources/Genomes/Plasmodium_faciparum.genome -g  ~/malaria/1_Predictions/genemark.Pf.gtf -b Pf -c -p
-./gffParse.pl -i ~/malaria/Resources/Genomes/Plasmodium_knowlesi.genome -g  ~/malaria/1_Predictions/genemark.Pk.gtf -b Pk -c -p
+./gffParse.pl -i ~/malaria/Resources/Genomes/fixed_Pk.genome -g  ~/malaria/1_Predictions/fixed_Pk.gtf -b Pk -c -p
 ./gffParse.pl -i ~/malaria/Resources/Genomes/Plasmodium_vivax.genome -g  ~/malaria/1_Predictions/genemark.Pv.gtf -b Pv -c -p
 ./gffParse.pl -i ~/malaria/Resources/Genomes/Plasmodium_yoelii.genome -g  ~/malaria/1_Predictions/genemark.Py.gtf -b Py -c -p
 ./gffParse.pl -i ~/malaria/Resources/Genomes/Toxoplasma_gondii.genome -g  ~/malaria/1_Predictions/Tg.gff -b Tg -c -p
@@ -126,29 +133,45 @@ chmod -R go-w "$(brew --prefix)/share/zsh"
 
 # More details about proteinortho and installation can be found at: https://www.bioinf.uni-leipzig.de/Software/proteinortho/
 brew install proteinortho=6.3.1
- 
-cd ~/Parsed # if you are not already in this directory 
+
+# There is a discrepancy in the headers of our fasta files, so you will need to remove the substring from each line starting from the first tab character followed by "length"
+# If you do not do this step prior to running proteinortho you will encounter an error in your nohup.out file! 
+cd ~/malaria/Parsed
+cat Pv.faa | sed 's/\tlength.*//' > new_Pv.faa
+cat Pc.faa | sed 's/\tlength.*//' > new_Pc.faa
+cat Pk.faa | sed 's/\tlength.*//' > new_Pk.faa
+cat Py.faa | sed 's/\tlength.*//' > new_Py.faa
+cat Pf.faa | sed 's/\tlength.*//' > new_Pf.faa
+cat Tg.faa | sed 's/\tlength.*//' > new_Tg.faa
+cat Ht2.faa | sed 's/\tlength.*//' > new_Ht2.faa
+cat Pb.faa | sed 's/\tlength.*//' > new_Pb.faa 
+
+mkdir ../Ortho
+cp new* ../Ortho
 
 # Run proteinortho like this:
-nohup proteinortho6.pl {Ht,Pb,Pc,Pf,Pk,Pv,Py,Tg}.faa &
+cd ../Ortho
+nohup proteinortho6.pl {new_Ht2,new_Pb,new_Pc,new_Pf,new_Pk,new_Pv,new_Py,new_Tg}.faa &
 
 # BUSCO analysis
-# Install BUSCO with homebrew
+# Install BUSCO by creating a new conda environment
 # More details about proteinortho and installation can be found at: https://busco.ezlab.org/
-brew install BUSCO=5.6.1 
+conda create -n busco -c bioconda busco=5.6.1
+conda activate busco 
 
 cd
 mkdir BUSCO 
 cd BUSCO
 
 # use '-l apicomplexa' to  include only sequences that belong to organisms classified within the taxonomic group Apicomplexa
-busco -i ../Parsed/Pb.faa -o Pb -m prot -l apicomplexa
-busco -i ../Parsed/Pc.faa -o Pc -m prot -l apicomplexa
-busco -i ../Parsed/Pf.faa -o Pf -m prot -l apicomplexa
-busco -i ../Parsed/Pk.faa -o Pk -m prot -l apicomplexa
-busco -i ../Parsed/Pv.faa -o Pv -m prot -l apicomplexa
-busco -i ../Parsed/Py.faa -o Py -m prot -l apicomplexa
-busco -i ../Parsed/Tg.faa -o Tg -m prot -l apicomplexa
+busco -i ../Ortho/new_Pb.faa -o Pb -m prot -l apicomplexa
+busco -i ../Ortho/new_Pc.faa -o Pc -m prot -l apicomplexa
+busco -i ../Ortho/new_Pf.faa -o Pf -m prot -l apicomplexa
+busco -i ../Ortho/new_Pk.faa -o Pk -m prot -l apicomplexa
+busco -i ../Ortho/new_Pv.faa -o Pv -m prot -l apicomplexa
+busco -i ../Ortho/new_Py.faa -o Py -m prot -l apicomplexa
+busco -i ../Ortho/new_Tg.faa -o Tg -m prot -l apicomplexa
+busco -i ../Ortho/new_Ht2.faa -o Ht2 -m prot -l apicomplexa
 
 ```
 
