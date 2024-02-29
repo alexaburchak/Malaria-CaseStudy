@@ -220,10 +220,36 @@ chmod +x createFasta.py
 python createFasta.py 
 
 ```
-## Alignment 
+
+## Alignment and Building Trees 
 ```sh
 # Create a new environment to install clustalo and raxml 
 conda create -n clust_and_rax -c bioconda clustalo=1.2.3 raxml=8.2.12
 conda activate clust_and_rax
 
+cd ~/Complete_Only_Tables/Fasta_files
+
+# Loop through fasta files and align with clustalo
+for fasta_file in *.fasta; do
+    output_file="${fasta_file%.fasta}_aligned.faa";     
+    clustalo -i "$fasta_file" -o "$output_file" -v; done
+
+mkdir ~/malaria/Aligned_Fasta
+mv *aligned.faa ../../Aligned_Fasta
+cd ~/malaria/Aligned_Fasta
+
+# Loop through aligned files and make trees with raxml 
+for fasta_file in *_aligned.faa; do
+    tree_output="${fasta_file%.faa}.tre";     
+    raxmlHPC -s "$fasta_file" -n "$tree_output" -o Tg -m PROTGAMMABLOSUM62 -p 12345; done
+
+# Install phylip 
+conda install -c bioconda phylip=3.697
+
+# Create a file to store all bestTree files
+cat RAxML_bestTree.*_aligned.tre > input_trees.tre
+
+####NOTE: THIS PART DOES NOT WORK YET :/
+# Use consense to merge all individual trees
+consense < input_trees.tre
 ```
