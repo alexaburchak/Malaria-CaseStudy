@@ -99,7 +99,7 @@ python ~/malaria/Resources/Programs/datParser.py Ht_blast_results Htartakovskyi.
 
 ```
 
-## Identify orthologs with proteinortho and BUSCO
+## Identify orthologs with proteinortho
 ```sh
 # Before parsing, an error needs to be fixed in the Plasmodium knowlesi genome file:
 cd ~/malaria/Resources/Genomes
@@ -153,15 +153,19 @@ cp new* ../Ortho
 cd ../Ortho
 nohup proteinortho6.pl {new_Ht2,new_Pb,new_Pc,new_Pf,new_Pk,new_Pv,new_Py,new_Tg}.faa &
 
+```
+
+# Identifying one-to-one orthologs
+```sh
 # BUSCO analysis
 # Install BUSCO by creating a new conda environment
 # More details about proteinortho and installation can be found at: https://busco.ezlab.org/
 conda create -n busco -c bioconda busco=5.6.1
-conda activate busco 
+conda activate busco
 
 cd
-mkdir BUSCO 
-cd BUSCO
+mkdir Busco
+cd Busco
 
 # use '-l apicomplexa' to  include only sequences that belong to organisms classified within the taxonomic group Apicomplexa
 busco -i ../Ortho/new_Pb.faa -o Pb -m prot -l apicomplexa
@@ -173,5 +177,53 @@ busco -i ../Ortho/new_Py.faa -o Py -m prot -l apicomplexa
 busco -i ../Ortho/new_Tg.faa -o Tg -m prot -l apicomplexa
 busco -i ../Ortho/new_Ht2.faa -o Ht2 -m prot -l apicomplexa
 
-```
+# move busco results to a new folder 
+cd ~/malaria
+mkdir Full_Tables
+cd Busco
+mv Ht2/run_apicomplexa_odb10/full_table.csv Full_Tables/full_table_Ht2.tsv
+mv Pb/run_apicomplexa_odb10/full_table.csv Full_Tables/full_table_Pb.tsv
+mv Pc/run_apicomplexa_odb10/full_table.csv Full_Tables/full_table_Pc.tsv
+mv Pv/run_apicomplexa_odb10/full_table.csv Full_Tables/full_table_Pv.tsv
+mv Py/run_apicomplexa_odb10/full_table.csv Full_Tables/full_table_Py.tsv
+mv Pf/run_apicomplexa_odb10/full_table.csv Full_Tables/full_table_Pf.tsv
+mv Pk/run_apicomplexa_odb10/full_table.csv Full_Tables/full_table_Pk.tsv
+mv Tg/run_apicomplexa_odb10/full_table.csv Full_Tables/full_table_Tg.tsv 
 
+# remove missing or fragmented busco genes 
+# some busco genes are duplicated, in which case we want to keep only one sequence ID (sort -k1,1 -u) 
+cd ~/malaria
+mkdir Complete_Only_Tables 
+cd Full_Tables 
+cat full_table_Tg.tsv | awk 'NR>3 {print $1, $2, $3}' | grep -v 'Missing' | grep -v 'Fragmented' | sort -k1,1 -u >> ../Complete_Only_Tables/complete_table_Tg.tsv
+cat full_table_Pf.tsv | awk 'NR>3 {print $1, $2, $3}' | grep -v 'Missing' | grep -v 'Fragmented' | sort -k1,1 -u >> ../Complete_Only_Tables/complete_table_Pf.tsv
+cat full_table_Py.tsv | awk 'NR>3 {print $1, $2, $3}' | grep -v 'Missing' | grep -v 'Fragmented' | sort -k1,1 -u >> ../Complete_Only_Tables/complete_table_Py.tsv
+cat full_table_Pk.tsv | awk 'NR>3 {print $1, $2, $3}' | grep -v 'Missing' | grep -v 'Fragmented' | sort -k1,1 -u >> ../Complete_Only_Tables/complete_table_Pk.tsv
+cat full_table_Pv.tsv | awk 'NR>3 {print $1, $2, $3}' | grep -v 'Missing' | grep -v 'Fragmented' | sort -k1,1 -u >> ../Complete_Only_Tables/complete_table_Pv.tsv
+cat full_table_Pc.tsv | awk 'NR>3 {print $1, $2, $3}' | grep -v 'Missing' | grep -v 'Fragmented' | sort -k1,1 -u >> ../Complete_Only_Tables/complete_table_Pc.tsv
+cat full_table_Ht2.tsv | awk 'NR>3 {print $1, $2, $3}' | grep -v 'Missing' | grep -v 'Fragmented' | sort -k1,1 -u >> ../Complete_Only_Tables/complete_table_Ht2.tsv
+cat full_table_Pb.tsv | awk 'NR>3 {print $1, $2, $3}' | grep -v 'Missing' | grep -v 'Fragmented' | sort -k1,1 -u >> ../Complete_Only_Tables/complete_table_Pb.tsv
+
+# append species name to the sequence ID
+cd Complete_Only_Tables
+chmod +x add_species.sh
+./add_species.sh
+
+# use buscoSearch.py to extract busco genes found in all 8 species 
+cd Complete_Only_Tables
+python ../Resources/Programs/buscoSearch.py 
+cat common_genes_with_species.txt | wc -l #should get 78 genes
+
+# use createFasta.py to generate fasta files for each of the common busco genes 
+# this program makes a new directory calls Fasta_files to store all of the generated fasta files 
+chmod +x createFasta.py
+python createFasta.py 
+
+```
+## Alignment 
+```sh
+# Create a new environment to install clustalo and raxml 
+conda create -n clust_and_rax -c bioconda clustalo=1.2.3 raxml=8.2.12
+conda activate clust_and_rax
+
+```
