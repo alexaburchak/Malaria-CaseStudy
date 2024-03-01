@@ -156,7 +156,7 @@ nohup proteinortho6.pl {new_Ht2,new_Pb,new_Pc,new_Pf,new_Pk,new_Pv,new_Py,new_Tg
 
 ```
 
-# Identifying one-to-one orthologs with BUSCO
+## Identifying one-to-one orthologs with BUSCO
 ```sh
 # BUSCO analysis
 # Install BUSCO by creating a new conda environment
