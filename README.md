@@ -5,6 +5,7 @@ mkdir malaria
 cd malaria 
 cp ../../../binp29/Data/plasmodiumGenes.tgz
 tar -xvzf plasmodiumGenes.tgz
+
 ```
 
 ## Gene Prediction of Plasmodium Data
@@ -155,7 +156,7 @@ nohup proteinortho6.pl {new_Ht2,new_Pb,new_Pc,new_Pf,new_Pk,new_Pv,new_Py,new_Tg
 
 ```
 
-# Identifying one-to-one orthologs
+# Identifying one-to-one orthologs with BUSCO
 ```sh
 # BUSCO analysis
 # Install BUSCO by creating a new conda environment
@@ -247,9 +248,28 @@ for fasta_file in *_aligned.faa; do
 conda install -c bioconda phylip=3.697
 
 # Create a file to store all bestTree files
-cat RAxML_bestTree.*_aligned.tre > input_trees.tre
+cat RAxML_bestTree.*_aligned.tre > infile
 
-####NOTE: THIS PART DOES NOT WORK YET :/
 # Use consense to merge all individual trees
-consense < input_trees.tre
+consense
+# consense is an interface in which you should specify the following parameters:
+# Please enter a new file name> infile
+# Settings for this run:
+# C         Consensus type (MRe, strict, MR, Ml):  Majority rule (extended)
+# O                                Outgroup root:  No, use as outgroup species  1
+# R                Trees to be treated as Rooted:  No
+# T           Terminal type (IBM PC, ANSI, none):  ANSI
+# 1                Print out the sets of species:  Yes
+# 2         Print indications of progress of run:  Yes
+# 3                               Print out tree:  Yes
+# 4               Write out trees onto tree file:  Yes
+
+# Are these settings correct? (type Y or the letter for one to change) Type R to root your tree
+
+# You should now see that the O setting is removed as consense will select the outgroup for you
+# Are these settings correct? (type Y or the letter for one to change) Type Y to generate a tree 
+
+# If all runs correctly, you will get the following Newick consensus tree:
+# (((((Pb:78.0,Py:78.0):73.0,((Pv:78.0,Pc:78.0):45.0,Pk:78.0):68.0):25.0,Pf:78.0):51.0,Ht2:78.0):78.0,Tg:78.0); 
+
 ```
